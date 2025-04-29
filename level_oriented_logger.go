@@ -3,6 +3,7 @@ package logger
 import (
 	"os"
 	"path/filepath"
+	"sync"
 )
 
 type LevelOrientedLogger struct {
@@ -11,9 +12,13 @@ type LevelOrientedLogger struct {
 	infoLogFile  *os.File
 	warnLogFile  *os.File
 	errorLogFile *os.File
+	mu           *sync.Mutex
 }
 
 func (l *LevelOrientedLogger) _setup() error {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+
 	debugLogFile, err := os.OpenFile(filepath.Join(l.fullpath, "debug.log"), os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
 	if err != nil {
 		return err
@@ -66,18 +71,30 @@ func (l *LevelOrientedLogger) _Log(message string, level LogLevel) error {
 
 	switch level {
 	case DEBUG:
+		l.mu.Lock()
+		defer l.mu.Unlock()
+
 		if _, err := l.debugLogFile.Write([]byte(output)); err != nil {
 			return err
 		}
 	case INFO:
+		l.mu.Lock()
+		defer l.mu.Unlock()
+
 		if _, err := l.infoLogFile.Write([]byte(output)); err != nil {
 			return err
 		}
 	case WARN:
+		l.mu.Lock()
+		defer l.mu.Unlock()
+
 		if _, err := l.warnLogFile.Write([]byte(output)); err != nil {
 			return err
 		}
 	case ERROR:
+		l.mu.Lock()
+		defer l.mu.Unlock()
+
 		if _, err := l.errorLogFile.Write([]byte(output)); err != nil {
 			return err
 		}

@@ -3,14 +3,19 @@ package logger
 import (
 	"os"
 	"path/filepath"
+	"sync"
 )
 
 type DefaultLogger struct {
 	Logger
 	logFile *os.File
+	mu      *sync.Mutex
 }
 
 func (l *DefaultLogger) _setup() error {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+
 	logFile, err := os.OpenFile(filepath.Join(l.fullpath, "logger.log"), os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
 	if err != nil {
 		return err
@@ -39,6 +44,9 @@ func (l *DefaultLogger) _Log(message string, level LogLevel) error {
 		}
 		output += val
 	}
+
+	l.mu.Lock()
+	defer l.mu.Unlock()
 
 	if _, err := l.logFile.Write([]byte(output + "\n")); err != nil {
 		return err

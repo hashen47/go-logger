@@ -4,6 +4,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 )
 
 type LoggerType int
@@ -79,6 +80,7 @@ func _NewLogger(basepath string, dir string, level LogLevel, ltype LoggerType, f
 				formatter,
 			},
 			nil,
+			&sync.Mutex{},
 		}
 	case LOG_LEVEL_ORIENTED_TYPE:
 		logger = &LevelOrientedLogger{
@@ -91,6 +93,7 @@ func _NewLogger(basepath string, dir string, level LogLevel, ltype LoggerType, f
 			nil,
 			nil,
 			nil,
+			&sync.Mutex{},
 		}
 	case DATE_ORIENTED_TYPE:
 		logger = &DateOrientedLogger{
@@ -101,6 +104,7 @@ func _NewLogger(basepath string, dir string, level LogLevel, ltype LoggerType, f
 			},
 			nil,
 			"",
+			&sync.Mutex{},
 		}
 	default:
 		os.RemoveAll(fullpath)

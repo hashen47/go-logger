@@ -3,6 +3,7 @@ package logger
 import (
 	"os"
 	"path/filepath"
+	"sync"
 	"time"
 )
 
@@ -10,6 +11,7 @@ type DateOrientedLogger struct {
 	Logger
 	logFile     *os.File
 	logFileName string
+	mu          *sync.Mutex
 }
 
 func (l *DateOrientedLogger) _setup(curTime time.Time) error {
@@ -20,6 +22,9 @@ func (l *DateOrientedLogger) _setup(curTime time.Time) error {
 	}
 
 	l.logFileName = filename
+
+	l.mu.Lock()
+	defer l.mu.Unlock()
 
 	logFile, err := os.OpenFile(filepath.Join(l.fullpath, l.logFileName), os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
 	if err != nil {
@@ -54,6 +59,9 @@ func (l *DateOrientedLogger) _Log(message string, level LogLevel, curTime time.T
 		}
 		output += val
 	}
+
+	l.mu.Lock()
+	defer l.mu.Unlock()
 
 	if _, err := l.logFile.Write([]byte(output + "\n")); err != nil {
 		return err
